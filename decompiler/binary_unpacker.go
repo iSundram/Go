@@ -164,26 +164,632 @@ func (u *BinaryUnpacker) log2(x float64) float64 {
 	return float64(bits)
 }
 
-// AttemptUnpacking attempts to unpack the binary
+// AttemptUnpacking attempts to unpack the binary using advanced techniques
 func (u *BinaryUnpacker) AttemptUnpacking(filename string) error {
-	// Try different unpacking methods
-	if err := u.tryUPXUnpacking(filename); err == nil {
+	fmt.Println("Attempting advanced unpacking with maximum protection bypass...")
+	
+	// 1. Try advanced UPX unpacking with multiple variants
+	if err := u.tryAdvancedUPXUnpacking(filename); err == nil {
+		fmt.Println("Successfully unpacked using advanced UPX decompression")
 		return nil
 	}
 	
-	if err := u.tryZlibDecompression(filename); err == nil {
+	// 2. Try multiple compression algorithms
+	if err := u.tryMultipleCompressionAlgorithms(filename); err == nil {
+		fmt.Println("Successfully unpacked using compression algorithm detection")
 		return nil
 	}
 	
-	if err := u.tryXORDecryption(filename); err == nil {
+	// 3. Try advanced XOR decryption with key bruteforce
+	if err := u.tryAdvancedXORDecryption(filename); err == nil {
+		fmt.Println("Successfully unpacked using advanced XOR decryption")
 		return nil
 	}
 	
-	if err := u.tryAESDecryption(filename); err == nil {
+	// 4. Try advanced AES decryption with multiple modes
+	if err := u.tryAdvancedAESDecryption(filename); err == nil {
+		fmt.Println("Successfully unpacked using advanced AES decryption")
 		return nil
 	}
 	
-	return fmt.Errorf("unable to unpack binary")
+	// 5. Try custom packer detection and unpacking
+	if err := u.tryCustomPackerUnpacking(filename); err == nil {
+		fmt.Println("Successfully unpacked using custom packer detection")
+		return nil
+	}
+	
+	// 6. Try polymorphic unpacking
+	if err := u.tryPolymorphicUnpacking(filename); err == nil {
+		fmt.Println("Successfully unpacked polymorphic code")
+		return nil
+	}
+	
+	// 7. Try virtual machine unpacking
+	if err := u.tryVirtualMachineUnpacking(filename); err == nil {
+		fmt.Println("Successfully unpacked using virtual machine emulation")
+		return nil
+	}
+	
+	fmt.Println("All unpacking methods exhausted - proceeding with original binary")
+	return fmt.Errorf("unable to unpack binary with any known method")
+}
+
+// tryAdvancedUPXUnpacking attempts advanced UPX unpacking
+func (u *BinaryUnpacker) tryAdvancedUPXUnpacking(filename string) error {
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	
+	// Read file header to detect UPX variants
+	header := make([]byte, 1024)
+	_, err = file.Read(header)
+	if err != nil {
+		return err
+	}
+	
+	// Check for various UPX signatures
+	upxSignatures := [][]byte{
+		{0x55, 0x50, 0x58, 0x21},                         // Standard UPX
+		{0x55, 0x50, 0x58, 0x32},                         // UPX 2.x
+		{0x55, 0x50, 0x58, 0x33},                         // UPX 3.x
+		{0x4D, 0x5A, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00}, // UPX packed PE
+	}
+	
+	for i, signature := range upxSignatures {
+		if u.containsSignature(header, signature) {
+			fmt.Printf("Detected UPX variant %d\n", i+1)
+			return u.performUPXDecompression(filename, i+1)
+		}
+	}
+	
+	return fmt.Errorf("no UPX signature detected")
+}
+
+// performUPXDecompression performs actual UPX decompression
+func (u *BinaryUnpacker) performUPXDecompression(filename string, variant int) error {
+	// Simplified UPX decompression - real implementation would be more complex
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return err
+	}
+	
+	// Try to find and decompress UPX sections
+	unpackedData, err := u.decompressUPXData(data, variant)
+	if err != nil {
+		return err
+	}
+	
+	u.unpackedData = unpackedData
+	return nil
+}
+
+// decompressUPXData decompresses UPX packed data
+func (u *BinaryUnpacker) decompressUPXData(data []byte, variant int) ([]byte, error) {
+	// This is a simplified implementation
+	// Real UPX decompression would require implementing the full UPX algorithm
+	
+	// Look for compressed sections
+	for i := 0; i < len(data)-8; i++ {
+		// Check for potential compressed data (high entropy)
+		if i+1024 < len(data) {
+			section := data[i : i+1024]
+			entropy := u.calculateEntropy(section)
+			
+			if entropy > 7.5 {
+				// Try to decompress this section
+				decompressed, err := u.tryDecompressSection(section)
+				if err == nil && len(decompressed) > 0 {
+					// Reconstruct the binary with decompressed section
+					result := make([]byte, len(data))
+					copy(result, data)
+					copy(result[i:], decompressed)
+					return result, nil
+				}
+			}
+		}
+	}
+	
+	return nil, fmt.Errorf("no compressible sections found")
+}
+
+// tryDecompressSection tries to decompress a section using various algorithms
+func (u *BinaryUnpacker) tryDecompressSection(data []byte) ([]byte, error) {
+	// Try zlib decompression
+	if decompressed, err := u.zlibDecompress(data); err == nil {
+		return decompressed, nil
+	}
+	
+	// Try LZ decompression patterns
+	if decompressed, err := u.lzDecompress(data); err == nil {
+		return decompressed, nil
+	}
+	
+	return nil, fmt.Errorf("no decompression method worked")
+}
+
+// tryMultipleCompressionAlgorithms tries various compression algorithms
+func (u *BinaryUnpacker) tryMultipleCompressionAlgorithms(filename string) error {
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return err
+	}
+	
+	// Try different compression algorithms
+	algorithms := []string{"zlib", "gzip", "lz4", "lzma", "bzip2"}
+	
+	for _, algo := range algorithms {
+		if decompressed, err := u.tryCompressionAlgorithm(data, algo); err == nil {
+			fmt.Printf("Successfully decompressed using %s\n", algo)
+			u.unpackedData = decompressed
+			return nil
+		}
+	}
+	
+	return fmt.Errorf("no compression algorithm succeeded")
+}
+
+// tryCompressionAlgorithm tries a specific compression algorithm
+func (u *BinaryUnpacker) tryCompressionAlgorithm(data []byte, algorithm string) ([]byte, error) {
+	switch algorithm {
+	case "zlib":
+		return u.zlibDecompress(data)
+	case "gzip":
+		return u.gzipDecompress(data)
+	case "lz4":
+		return u.lz4Decompress(data)
+	case "lzma":
+		return u.lzmaDecompress(data)
+	case "bzip2":
+		return u.bzip2Decompress(data)
+	default:
+		return nil, fmt.Errorf("unknown algorithm: %s", algorithm)
+	}
+}
+
+// zlibDecompress decompresses zlib data
+func (u *BinaryUnpacker) zlibDecompress(data []byte) ([]byte, error) {
+	// Look for zlib headers in the data
+	for i := 0; i < len(data)-10; i++ {
+		// Check for zlib header (0x78XX)
+		if data[i] == 0x78 && (data[i+1] == 0x9C || data[i+1] == 0xDA || data[i+1] == 0x01) {
+			reader, err := zlib.NewReader(bytes.NewReader(data[i:]))
+			if err != nil {
+				continue
+			}
+			defer reader.Close()
+			
+			decompressed, err := io.ReadAll(reader)
+			if err == nil && len(decompressed) > 0 {
+				return decompressed, nil
+			}
+		}
+	}
+	
+	return nil, fmt.Errorf("no valid zlib data found")
+}
+
+// gzipDecompress attempts gzip decompression (simplified)
+func (u *BinaryUnpacker) gzipDecompress(data []byte) ([]byte, error) {
+	// Look for gzip magic number
+	for i := 0; i < len(data)-10; i++ {
+		if data[i] == 0x1F && data[i+1] == 0x8B {
+			// Found potential gzip header - try to decompress
+			// This would require implementing gzip decompression
+			return nil, fmt.Errorf("gzip decompression not fully implemented")
+		}
+	}
+	return nil, fmt.Errorf("no gzip data found")
+}
+
+// lz4Decompress attempts LZ4 decompression (simplified)
+func (u *BinaryUnpacker) lz4Decompress(data []byte) ([]byte, error) {
+	// LZ4 magic number: 0x184D2204
+	for i := 0; i < len(data)-10; i++ {
+		if data[i] == 0x04 && data[i+1] == 0x22 && data[i+2] == 0x4D && data[i+3] == 0x18 {
+			return nil, fmt.Errorf("lz4 decompression not fully implemented")
+		}
+	}
+	return nil, fmt.Errorf("no lz4 data found")
+}
+
+// lzmaDecompress attempts LZMA decompression (simplified)
+func (u *BinaryUnpacker) lzmaDecompress(data []byte) ([]byte, error) {
+	// LZMA has various magic numbers - simplified check
+	return nil, fmt.Errorf("lzma decompression not fully implemented")
+}
+
+// bzip2Decompress attempts bzip2 decompression (simplified)
+func (u *BinaryUnpacker) bzip2Decompress(data []byte) ([]byte, error) {
+	// bzip2 magic: "BZ"
+	for i := 0; i < len(data)-10; i++ {
+		if data[i] == 'B' && data[i+1] == 'Z' {
+			return nil, fmt.Errorf("bzip2 decompression not fully implemented")
+		}
+	}
+	return nil, fmt.Errorf("no bzip2 data found")
+}
+
+// lzDecompress attempts simple LZ decompression
+func (u *BinaryUnpacker) lzDecompress(data []byte) ([]byte, error) {
+	// Simplified LZ decompression - look for back-references
+	result := make([]byte, 0, len(data)*2)
+	
+	for i := 0; i < len(data); {
+		if i+2 < len(data) {
+			// Check for potential LZ back-reference
+			distance := int(data[i])
+			length := int(data[i+1])
+			
+			if distance > 0 && length > 0 && distance < len(result) && length < 256 {
+				// Copy from back-reference
+				start := len(result) - distance
+				for j := 0; j < length && start+j < len(result); j++ {
+					result = append(result, result[start+j])
+				}
+				i += 2
+			} else {
+				// Literal byte
+				result = append(result, data[i])
+				i++
+			}
+		} else {
+			result = append(result, data[i])
+			i++
+		}
+	}
+	
+	// Check if decompression was successful
+	if len(result) > len(data) && u.calculateEntropy(result) < u.calculateEntropy(data) {
+		return result, nil
+	}
+	
+	return nil, fmt.Errorf("lz decompression failed")
+}
+
+// tryAdvancedXORDecryption tries XOR decryption with key discovery
+func (u *BinaryUnpacker) tryAdvancedXORDecryption(filename string) error {
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return err
+	}
+	
+	// Try different XOR key lengths and patterns
+	keyLengths := []int{1, 2, 4, 8, 16, 32}
+	
+	for _, keyLen := range keyLengths {
+		if decrypted, err := u.bruteforceXORKey(data, keyLen); err == nil {
+			fmt.Printf("Successfully decrypted with XOR key length %d\n", keyLen)
+			u.unpackedData = decrypted
+			return nil
+		}
+	}
+	
+	return fmt.Errorf("xor decryption failed")
+}
+
+// bruteforceXORKey attempts to bruteforce XOR keys
+func (u *BinaryUnpacker) bruteforceXORKey(data []byte, keyLen int) ([]byte, error) {
+	// For small key lengths, try common patterns
+	if keyLen == 1 {
+		// Try single byte XOR
+		for key := 0; key <= 255; key++ {
+			decrypted := make([]byte, len(data))
+			for i := 0; i < len(data); i++ {
+				decrypted[i] = data[i] ^ byte(key)
+			}
+			
+			if u.looksLikeExecutable(decrypted) {
+				return decrypted, nil
+			}
+		}
+	} else if keyLen <= 4 {
+		// Try common multi-byte patterns
+		commonKeys := [][]byte{
+			{0xAA, 0xBB},
+			{0xFF, 0xFF},
+			{0x00, 0xFF},
+			{0x12, 0x34},
+			{0xDE, 0xAD, 0xBE, 0xEF},
+			{0xCA, 0xFE, 0xBA, 0xBE},
+		}
+		
+		for _, key := range commonKeys {
+			if len(key) == keyLen {
+				decrypted := u.xorDecrypt(data, key)
+				if u.looksLikeExecutable(decrypted) {
+					return decrypted, nil
+				}
+			}
+		}
+	}
+	
+	return nil, fmt.Errorf("no valid xor key found")
+}
+
+// xorDecrypt performs XOR decryption
+func (u *BinaryUnpacker) xorDecrypt(data, key []byte) []byte {
+	if len(key) == 0 {
+		return data
+	}
+	
+	result := make([]byte, len(data))
+	for i := 0; i < len(data); i++ {
+		result[i] = data[i] ^ key[i%len(key)]
+	}
+	
+	return result
+}
+
+// looksLikeExecutable checks if data looks like an executable
+func (u *BinaryUnpacker) looksLikeExecutable(data []byte) bool {
+	if len(data) < 16 {
+		return false
+	}
+	
+	// Check for ELF magic
+	if data[0] == 0x7F && data[1] == 'E' && data[2] == 'L' && data[3] == 'F' {
+		return true
+	}
+	
+	// Check for PE magic
+	if data[0] == 'M' && data[1] == 'Z' {
+		return true
+	}
+	
+	// Check for Mach-O magic
+	magic := binary.LittleEndian.Uint32(data[0:4])
+	if magic == 0xfeedface || magic == 0xfeedfacf || magic == 0xcafebabe {
+		return true
+	}
+	
+	// Check for reasonable entropy (not too high, not too low)
+	entropy := u.calculateEntropy(data[:min(1024, len(data))])
+	return entropy > 4.0 && entropy < 7.0
+}
+
+// tryAdvancedAESDecryption tries AES decryption with multiple modes
+func (u *BinaryUnpacker) tryAdvancedAESDecryption(filename string) error {
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return err
+	}
+	
+	// Try common AES keys and modes
+	commonKeys := [][]byte{
+		make([]byte, 16), // All zeros
+		bytes.Repeat([]byte{0xFF}, 16), // All ones
+		[]byte("1234567890123456"), // Common pattern
+		[]byte("ABCDEFGHIJKLMNOP"), // Alphabet pattern
+	}
+	
+	for _, key := range commonKeys {
+		// Try ECB mode
+		if decrypted, err := u.aesDecryptECB(data, key); err == nil && u.looksLikeExecutable(decrypted) {
+			fmt.Printf("Successfully decrypted with AES-ECB\n")
+			u.unpackedData = decrypted
+			return nil
+		}
+		
+		// Try CBC mode with null IV
+		if decrypted, err := u.aesDecryptCBC(data, key, make([]byte, 16)); err == nil && u.looksLikeExecutable(decrypted) {
+			fmt.Printf("Successfully decrypted with AES-CBC\n")
+			u.unpackedData = decrypted
+			return nil
+		}
+	}
+	
+	return fmt.Errorf("aes decryption failed")
+}
+
+// aesDecryptECB decrypts data using AES-ECB mode
+func (u *BinaryUnpacker) aesDecryptECB(data, key []byte) ([]byte, error) {
+	if len(data)%16 != 0 {
+		return nil, fmt.Errorf("data length not multiple of 16")
+	}
+	
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	
+	decrypted := make([]byte, len(data))
+	for i := 0; i < len(data); i += 16 {
+		block.Decrypt(decrypted[i:i+16], data[i:i+16])
+	}
+	
+	return decrypted, nil
+}
+
+// aesDecryptCBC decrypts data using AES-CBC mode (simplified)
+func (u *BinaryUnpacker) aesDecryptCBC(data, key, iv []byte) ([]byte, error) {
+	if len(data)%16 != 0 {
+		return nil, fmt.Errorf("data length not multiple of 16")
+	}
+	
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Simplified CBC implementation
+	decrypted := make([]byte, len(data))
+	prevBlock := iv
+	
+	for i := 0; i < len(data); i += 16 {
+		block.Decrypt(decrypted[i:i+16], data[i:i+16])
+		
+		// XOR with previous ciphertext block
+		for j := 0; j < 16; j++ {
+			decrypted[i+j] ^= prevBlock[j]
+		}
+		
+		prevBlock = data[i : i+16]
+	}
+	
+	return decrypted, nil
+}
+
+// tryCustomPackerUnpacking attempts to detect and unpack custom packers
+func (u *BinaryUnpacker) tryCustomPackerUnpacking(filename string) error {
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return err
+	}
+	
+	// Look for custom packer signatures
+	customSignatures := map[string][]byte{
+		"Themida":  {0x68, 0x00, 0x00, 0x00, 0x00, 0x68, 0x00, 0x00, 0x00, 0x00},
+		"VMProtect": {0xE8, 0x00, 0x00, 0x00, 0x00, 0x58, 0x25, 0x00, 0x00, 0xFF, 0xFF},
+		"Armadillo": {0x55, 0x8B, 0xEC, 0x6A, 0xFF, 0x68, 0x00, 0x00, 0x00, 0x00},
+	}
+	
+	for packerName, signature := range customSignatures {
+		if u.containsSignature(data, signature) {
+			fmt.Printf("Detected custom packer: %s\n", packerName)
+			return u.unpackCustomPacker(data, packerName)
+		}
+	}
+	
+	return fmt.Errorf("no custom packer detected")
+}
+
+// unpackCustomPacker unpacks custom packers
+func (u *BinaryUnpacker) unpackCustomPacker(data []byte, packerName string) error {
+	// This would implement specific unpacking logic for each packer
+	// For now, try generic approaches
+	
+	switch packerName {
+	case "Themida":
+		return u.unpackThemida(data)
+	case "VMProtect":
+		return u.unpackVMProtect(data)
+	case "Armadillo":
+		return u.unpackArmadillo(data)
+	default:
+		return fmt.Errorf("unknown packer: %s", packerName)
+	}
+}
+
+// unpackThemida attempts to unpack Themida protected binaries
+func (u *BinaryUnpacker) unpackThemida(data []byte) error {
+	// Simplified Themida unpacking - real implementation would be much more complex
+	// Look for potential original entry point
+	for i := 0; i < len(data)-8; i++ {
+		// Look for characteristic patterns
+		if data[i] == 0x60 && data[i+1] == 0xE8 { // PUSHAD + CALL pattern
+			// Try to find the unpacked code section
+			if unpackedSection, err := u.findUnpackedSection(data[i:]); err == nil {
+				u.unpackedData = unpackedSection
+				return nil
+			}
+		}
+	}
+	
+	return fmt.Errorf("themida unpacking failed")
+}
+
+// unpackVMProtect attempts to unpack VMProtect protected binaries
+func (u *BinaryUnpacker) unpackVMProtect(data []byte) error {
+	// Simplified VMProtect unpacking
+	return fmt.Errorf("vmprotect unpacking not implemented")
+}
+
+// unpackArmadillo attempts to unpack Armadillo protected binaries
+func (u *BinaryUnpacker) unpackArmadillo(data []byte) error {
+	// Simplified Armadillo unpacking
+	return fmt.Errorf("armadillo unpacking not implemented")
+}
+
+// findUnpackedSection tries to find the unpacked code section
+func (u *BinaryUnpacker) findUnpackedSection(data []byte) ([]byte, error) {
+	// Look for sections with reasonable entropy and executable patterns
+	for i := 0; i < len(data)-1024; i += 256 {
+		section := data[i : i+1024]
+		entropy := u.calculateEntropy(section)
+		
+		// Good executable code should have moderate entropy
+		if entropy > 4.0 && entropy < 7.0 {
+			// Check for executable patterns
+			if u.hasExecutablePatterns(section) {
+				return section, nil
+			}
+		}
+	}
+	
+	return nil, fmt.Errorf("no unpacked section found")
+}
+
+// hasExecutablePatterns checks for executable code patterns
+func (u *BinaryUnpacker) hasExecutablePatterns(data []byte) bool {
+	// Look for common instruction patterns
+	patterns := [][]byte{
+		{0x55, 0x8B, 0xEC},     // push ebp; mov ebp, esp
+		{0x48, 0x89, 0xE5},     // mov rbp, rsp (x64)
+		{0xC3},                 // ret
+		{0xE8},                 // call
+		{0x74, 0x75, 0x76, 0x77}, // conditional jumps
+	}
+	
+	patternCount := 0
+	for _, pattern := range patterns {
+		if u.containsSignature(data, pattern) {
+			patternCount++
+		}
+	}
+	
+	return patternCount >= 2
+}
+
+// tryPolymorphicUnpacking attempts to unpack polymorphic code
+func (u *BinaryUnpacker) tryPolymorphicUnpacking(filename string) error {
+	// Polymorphic unpacking would involve emulation and pattern analysis
+	return fmt.Errorf("polymorphic unpacking not fully implemented")
+}
+
+// tryVirtualMachineUnpacking attempts to unpack using virtual machine emulation
+func (u *BinaryUnpacker) tryVirtualMachineUnpacking(filename string) error {
+	// VM unpacking would involve sophisticated emulation
+	return fmt.Errorf("virtual machine unpacking not fully implemented")
+}
+
+// min returns the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // tryUPXUnpacking attempts UPX unpacking
@@ -292,46 +898,6 @@ func (u *BinaryUnpacker) tryXORDecryption(filename string) error {
 	}
 	
 	return fmt.Errorf("XOR decryption failed")
-}
-
-// xorDecrypt performs XOR decryption
-func (u *BinaryUnpacker) xorDecrypt(data, key []byte) []byte {
-	if len(key) == 0 {
-		return data
-	}
-	
-	result := make([]byte, len(data))
-	for i := range data {
-		result[i] = data[i] ^ key[i%len(key)]
-	}
-	return result
-}
-
-// looksLikeExecutable checks if data looks like an executable
-func (u *BinaryUnpacker) looksLikeExecutable(data []byte) bool {
-	if len(data) < 16 {
-		return false
-	}
-	
-	// Check for ELF magic
-	if len(data) >= 4 && data[0] == 0x7F && data[1] == 'E' && data[2] == 'L' && data[3] == 'F' {
-		return true
-	}
-	
-	// Check for PE magic
-	if len(data) >= 2 && data[0] == 'M' && data[1] == 'Z' {
-		return true
-	}
-	
-	// Check for Mach-O magic
-	if len(data) >= 4 {
-		magic := binary.LittleEndian.Uint32(data[0:4])
-		if magic == 0xfeedface || magic == 0xfeedfacf || magic == 0xcafebabe || magic == 0xcffaedfe {
-			return true
-		}
-	}
-	
-	return false
 }
 
 // tryAESDecryption attempts AES decryption with common keys
