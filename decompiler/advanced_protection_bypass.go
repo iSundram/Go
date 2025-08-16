@@ -551,8 +551,6 @@ func (apb *AdvancedProtectionBypass) analyzePolymorphicCode(baseAddr uint64, dat
 	realCodeBlocks := make([][]byte, 0)
 	
 	for _, match := range matches {
-		addr := baseAddr + uint64(match)
-		
 		// Try to find the actual payload after polymorphic wrapper
 		for i := match; i < len(data)-16; i += 4 {
 			candidate := data[i : i+16]
@@ -826,7 +824,7 @@ func (apb *AdvancedProtectionBypass) calculateBranchTarget(addr uint64, instr ui
 	if (instr & 0xfc000000) == 0x14000000 { // B (unconditional)
 		imm := int32(instr&0x03ffffff) << 2
 		if imm&0x08000000 != 0 { // Sign extend
-			imm |= 0xf0000000
+			imm |= int32(0xf0000000)
 		}
 		return uint64(int64(addr) + int64(imm))
 	}
@@ -834,7 +832,7 @@ func (apb *AdvancedProtectionBypass) calculateBranchTarget(addr uint64, instr ui
 	if (instr & 0xff000010) == 0x54000000 { // B.cond
 		imm := int32((instr>>5)&0x7ffff) << 2
 		if imm&0x00100000 != 0 { // Sign extend
-			imm |= 0xffe00000
+			imm |= int32(0xffe00000)
 		}
 		return uint64(int64(addr) + int64(imm))
 	}
@@ -842,7 +840,7 @@ func (apb *AdvancedProtectionBypass) calculateBranchTarget(addr uint64, instr ui
 	if (instr & 0xfc000000) == 0x94000000 { // BL
 		imm := int32(instr&0x03ffffff) << 2
 		if imm&0x08000000 != 0 { // Sign extend
-			imm |= 0xf0000000
+			imm |= int32(0xf0000000)
 		}
 		return uint64(int64(addr) + int64(imm))
 	}

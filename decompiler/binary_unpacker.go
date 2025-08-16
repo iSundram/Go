@@ -900,46 +900,6 @@ func (u *BinaryUnpacker) tryXORDecryption(filename string) error {
 	return fmt.Errorf("XOR decryption failed")
 }
 
-// xorDecrypt performs XOR decryption
-func (u *BinaryUnpacker) xorDecrypt(data, key []byte) []byte {
-	if len(key) == 0 {
-		return data
-	}
-	
-	result := make([]byte, len(data))
-	for i := range data {
-		result[i] = data[i] ^ key[i%len(key)]
-	}
-	return result
-}
-
-// looksLikeExecutable checks if data looks like an executable
-func (u *BinaryUnpacker) looksLikeExecutable(data []byte) bool {
-	if len(data) < 16 {
-		return false
-	}
-	
-	// Check for ELF magic
-	if len(data) >= 4 && data[0] == 0x7F && data[1] == 'E' && data[2] == 'L' && data[3] == 'F' {
-		return true
-	}
-	
-	// Check for PE magic
-	if len(data) >= 2 && data[0] == 'M' && data[1] == 'Z' {
-		return true
-	}
-	
-	// Check for Mach-O magic
-	if len(data) >= 4 {
-		magic := binary.LittleEndian.Uint32(data[0:4])
-		if magic == 0xfeedface || magic == 0xfeedfacf || magic == 0xcafebabe || magic == 0xcffaedfe {
-			return true
-		}
-	}
-	
-	return false
-}
-
 // tryAESDecryption attempts AES decryption with common keys
 func (u *BinaryUnpacker) tryAESDecryption(filename string) error {
 	file, err := os.Open(filename)

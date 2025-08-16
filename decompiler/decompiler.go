@@ -995,7 +995,7 @@ func (d *Decompiler) generateSource() string {
 			if i >= 10 { // Limit constants
 				break
 			}
-			constName := d.generateConstantName(str)
+			constName := "CONST_STR_" + fmt.Sprintf("%d", i)
 			source.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constName, d.escapeString(str)))
 		}
 		source.WriteString(")\n\n")
