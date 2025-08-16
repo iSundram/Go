@@ -1,1 +1,1 @@
-create a go decompiler that decompiles with 100% accuracy. analyse go source code after that see how it builds , reverse each and every step. test the decompiler too. 
+analyse the repo files, and after decompile binary directadmin, ans put source code in /src with 100% accuracy after decompiling , check wll files add all missing things . it should be 100% accurate
