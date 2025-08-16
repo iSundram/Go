@@ -1,0 +1,1 @@
+create a go decompiler that decompiles with 100% accuracy. analyse go source code after that see how it builds , reverse each and every step. test the decompiler too. 
