@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"unicode"
 )
 
 // Decompiler represents the main decompiler engine
@@ -1806,78 +1805,6 @@ func (d *Decompiler) generateComprehensiveConstants() string {
 	return constants.String()
 }
 
-// generateConstantName generates a meaningful constant name
-func (d *Decompiler) generateConstantName(str string, usedNames map[string]bool) string {
-	// Clean the string to create a valid identifier
-	cleaned := strings.ToUpper(str)
-	cleaned = regexp.MustCompile(`[^A-Z0-9_]`).ReplaceAllString(cleaned, "_")
-	cleaned = regexp.MustCompile(`_+`).ReplaceAllString(cleaned, "_")
-	cleaned = strings.Trim(cleaned, "_")
-	
-	if len(cleaned) == 0 {
-		return ""
-	}
-	
-	// Ensure it starts with a letter
-	if len(cleaned) > 0 && cleaned[0] >= '0' && cleaned[0] <= '9' {
-		cleaned = "CONST_" + cleaned
-	}
-	
-	// Truncate if too long
-	if len(cleaned) > 30 {
-		cleaned = cleaned[:30]
-	}
-	
-	// Add length suffix to make it unique and informative
-	baseName := fmt.Sprintf("CONST_%s_%d", cleaned, len(str))
-	
-	// Ensure uniqueness
-	name := baseName
-	counter := 1
-	for usedNames[name] {
-		name = fmt.Sprintf("%s_%d", baseName, counter)
-		counter++
-	}
-	
-	usedNames[name] = true
-	return name
-}
-
-// isSystemString checks if a string is likely a system/runtime string
-func (d *Decompiler) isSystemString(str string) bool {
-	systemPrefixes := []string{
-		"runtime.",
-		"type.",
-		"go.buildid",
-		"/usr/",
-		"/lib/",
-		"/tmp/",
-		"__libc_",
-		"GLIBC_",
-	}
-	
-	for _, prefix := range systemPrefixes {
-		if strings.HasPrefix(str, prefix) {
-			return true
-		}
-	}
-	
-	// Skip strings that are just format specifiers
-	if regexp.MustCompile(`^%[sdxpv%]+$`).MatchString(str) {
-		return true
-	}
-	
-	// Skip strings with too many non-printable characters
-	nonPrintable := 0
-	for _, r := range str {
-		if !unicode.IsPrint(r) && r != '\n' && r != '\t' {
-			nonPrintable++
-		}
-	}
-	
-	return float64(nonPrintable)/float64(len(str)) > 0.3
-}
-
 // generateGlobalVariables generates global variables from data segments
 func (d *Decompiler) generateGlobalVariables() string {
 	if len(d.dataSegments) == 0 {
@@ -1897,27 +1824,6 @@ func (d *Decompiler) generateGlobalVariables() string {
 	
 	variables.WriteString(")\n\n")
 	return variables.String()
-}
-
-// generateVariableName generates a valid variable name
-func (d *Decompiler) generateVariableName(segmentName string, index int) string {
-	if segmentName == "" {
-		return fmt.Sprintf("var_data_%d", index)
-	}
-	
-	// Clean segment name
-	cleaned := regexp.MustCompile(`[^a-zA-Z0-9_]`).ReplaceAllString(segmentName, "_")
-	cleaned = strings.Trim(cleaned, "_")
-	
-	if len(cleaned) == 0 || (cleaned[0] >= '0' && cleaned[0] <= '9') {
-		cleaned = "var_" + cleaned
-	}
-	
-	if cleaned == "" {
-		return fmt.Sprintf("var_segment_%d", index)
-	}
-	
-	return "var_" + cleaned
 }
 
 // performComprehensiveFunctionAnalysis performs comprehensive function analysis
@@ -2282,35 +2188,6 @@ func (d *Decompiler) generateComprehensiveMainFunction() string {
 	return main.String()
 }
 
-// generateAdvancedFunctionCode generates function code with advanced analysis
-func (d *Decompiler) generateAdvancedFunctionCode(fn Function) string {
-	var code strings.Builder
-	
-	// Function signature
-	code.WriteString(fmt.Sprintf("func %s(", fn.Name))
-	
-	// Parameters
-	for i, param := range fn.Parameters {
-		if i > 0 {
-			code.WriteString(", ")
-		}
-		code.WriteString(param)
-	}
-	
-	code.WriteString(")")
-	
-	// Return type
-	if fn.ReturnType != "" {
-		code.WriteString(fmt.Sprintf(" %s", fn.ReturnType))
-	}
-	
-	code.WriteString(" {\n")
-	code.WriteString(fn.Body)
-	code.WriteString("}")
-	
-	return code.String()
-}
-
 // generateAnalysisSummary generates comprehensive analysis summary
 func (d *Decompiler) generateAnalysisSummary() string {
 	var summary strings.Builder
@@ -2326,15 +2203,6 @@ func (d *Decompiler) generateAnalysisSummary() string {
 	summary.WriteString("\n")
 	
 	return summary.String()
-}
-
-// detectBinaryFormat detects the binary format for reporting
-func (d *Decompiler) detectBinaryFormat() string {
-	// This would be set during parsing - simplified version
-	if d.architecture == "arm64" || d.architecture == "x86_64" {
-		return "ELF"
-	}
-	return "Unknown"
 }
 
 // Helper methods for enhanced parsing
