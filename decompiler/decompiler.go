@@ -99,13 +99,30 @@ func New() *Decompiler {
 	}
 }
 
-// Decompile analyzes and decompiles a Go binary
+// Decompile analyzes and decompiles a Go binary with advanced capabilities
 func (d *Decompiler) Decompile(filename string) (string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return "", fmt.Errorf("failed to open file: %v", err)
 	}
 	defer file.Close()
+
+	// Check if binary is packed/encrypted
+	unpacker := NewBinaryUnpacker(d)
+	isPacked, _ := unpacker.DetectPacking(filename)
+	
+	targetFile := filename
+	if isPacked {
+		fmt.Println("Packed/encrypted binary detected. Attempting to unpack...")
+		if err := unpacker.AttemptUnpacking(filename); err == nil {
+			// Save unpacked binary temporarily
+			unpackedFile := "/tmp/unpacked_binary"
+			if err := unpacker.SaveUnpackedBinary(unpackedFile); err == nil {
+				targetFile = unpackedFile
+				fmt.Println("Successfully unpacked binary")
+			}
+		}
+	}
 
 	// Detect binary format and parse accordingly
 	format, err := d.detectFormat(file)
@@ -115,11 +132,11 @@ func (d *Decompiler) Decompile(filename string) (string, error) {
 
 	switch format {
 	case "ELF":
-		err = d.parseELF(filename)
+		err = d.parseELF(targetFile)
 	case "PE":
-		err = d.parsePE(filename)
+		err = d.parsePE(targetFile)
 	case "Mach-O":
-		err = d.parseMachO(filename)
+		err = d.parseMachO(targetFile)
 	default:
 		return "", fmt.Errorf("unsupported binary format: %s", format)
 	}
@@ -129,7 +146,17 @@ func (d *Decompiler) Decompile(filename string) (string, error) {
 	}
 
 	// Generate decompiled Go source code
-	return d.generateSource(), nil
+	result := d.generateSource()
+	
+	// Perform advanced analysis
+	analyzer := NewAdvancedAnalyzer(d)
+	if err := analyzer.PerformAdvancedAnalysis(); err == nil {
+		// Prepend advanced analysis report
+		report := analyzer.GenerateAdvancedReport()
+		result = report + result
+	}
+	
+	return result, nil
 }
 
 // detectFormat detects the binary format (ELF, PE, Mach-O)
