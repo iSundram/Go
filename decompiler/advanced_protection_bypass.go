@@ -1,20 +1,13 @@
 package decompiler
 
 import (
-	"bytes"
 	"crypto/aes"
-	"crypto/cipher"
 	"crypto/des"
-	"crypto/md5"
 	"crypto/rc4"
-	"crypto/sha1"
-	"crypto/sha256"
 	"debug/elf"
 	"encoding/binary"
 	"fmt"
-	"io"
 	"math"
-	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -308,8 +301,12 @@ func (apb *AdvancedProtectionBypass) findEncryptionKeys(elfFile *elf.File) map[s
 			}
 			
 			// Look for potential keys (high entropy data of specific sizes)
+			keyCount := 0
 			for _, keySize := range keySizes {
-				for i := 0; i <= len(data)-keySize; i += 4 {
+				for i := 0; i <= len(data)-keySize; i += keySize/2 { // Skip more aggressively
+					if keyCount >= 20 { // Limit keys per section
+						break
+					}
 					candidate := data[i : i+keySize]
 					entropy := apb.calculateEntropy(candidate)
 					
@@ -319,7 +316,11 @@ func (apb *AdvancedProtectionBypass) findEncryptionKeys(elfFile *elf.File) map[s
 						keys[keyName] = candidate
 						apb.cryptoAnalyzer.keys[keyName] = candidate
 						fmt.Printf("Potential encryption key found: %s (entropy: %.2f)\n", keyName, entropy)
+						keyCount++
 					}
+				}
+				if keyCount >= 20 {
+					break
 				}
 			}
 		}
@@ -824,7 +825,7 @@ func (apb *AdvancedProtectionBypass) calculateBranchTarget(addr uint64, instr ui
 	if (instr & 0xfc000000) == 0x14000000 { // B (unconditional)
 		imm := int32(instr&0x03ffffff) << 2
 		if imm&0x08000000 != 0 { // Sign extend
-			imm |= int32(0xf0000000)
+			imm |= -0x10000000
 		}
 		return uint64(int64(addr) + int64(imm))
 	}
@@ -832,7 +833,7 @@ func (apb *AdvancedProtectionBypass) calculateBranchTarget(addr uint64, instr ui
 	if (instr & 0xff000010) == 0x54000000 { // B.cond
 		imm := int32((instr>>5)&0x7ffff) << 2
 		if imm&0x00100000 != 0 { // Sign extend
-			imm |= int32(0xffe00000)
+			imm |= -0x00200000
 		}
 		return uint64(int64(addr) + int64(imm))
 	}
@@ -840,7 +841,7 @@ func (apb *AdvancedProtectionBypass) calculateBranchTarget(addr uint64, instr ui
 	if (instr & 0xfc000000) == 0x94000000 { // BL
 		imm := int32(instr&0x03ffffff) << 2
 		if imm&0x08000000 != 0 { // Sign extend
-			imm |= int32(0xf0000000)
+			imm |= -0x10000000
 		}
 		return uint64(int64(addr) + int64(imm))
 	}
@@ -1033,7 +1034,7 @@ func (apb *AdvancedProtectionBypass) detectObfuscatedControlFlow(cfg *ControlFlo
 // simplifyControlFlow attempts to simplify obfuscated control flow
 func (apb *AdvancedProtectionBypass) simplifyControlFlow(cfg *ControlFlowGraph) {
 	// Remove fake jumps and NOPs
-	for addr, block := range cfg.blocks {
+	for _, block := range cfg.blocks {
 		simplified := make([]Instruction, 0)
 		
 		for _, instr := range block.instructions {
@@ -1068,6 +1069,7 @@ func (apb *AdvancedProtectionBypass) extractHiddenStrings(filename string) error
 	defer elfFile.Close()
 	
 	allStrings := make([]string, 0)
+	keyCount := 0
 	
 	for _, section := range elfFile.Sections {
 		data, err := section.Data()
@@ -1079,8 +1081,12 @@ func (apb *AdvancedProtectionBypass) extractHiddenStrings(filename string) error
 		strings := apb.extractStringsFromData(data)
 		allStrings = append(allStrings, strings...)
 		
-		// Try to decrypt strings using found keys
+		// Try to decrypt strings using found keys (limited)
 		for keyName, key := range apb.cryptoAnalyzer.keys {
+			if keyCount >= 50 { // Limit total key testing
+				fmt.Printf("Key testing limit reached - skipping remaining keys\n")
+				break
+			}
 			decrypted := apb.tryXORDecrypt(data, key)
 			if decrypted != nil {
 				decryptedStrings := apb.extractStringsFromData(decrypted)
@@ -1089,6 +1095,7 @@ func (apb *AdvancedProtectionBypass) extractHiddenStrings(filename string) error
 					allStrings = append(allStrings, decryptedStrings...)
 				}
 			}
+			keyCount++
 		}
 		
 		// Look for base64 encoded strings
@@ -1115,7 +1122,7 @@ func (apb *AdvancedProtectionBypass) extractHiddenStrings(filename string) error
 
 // extractStringsFromData extracts printable strings from raw data
 func (apb *AdvancedProtectionBypass) extractStringsFromData(data []byte) []string {
-	strings := make([]string, 0)
+	result := make([]string, 0)
 	
 	var currentString []byte
 	for _, b := range data {
@@ -1123,7 +1130,7 @@ func (apb *AdvancedProtectionBypass) extractStringsFromData(data []byte) []strin
 			currentString = append(currentString, b)
 		} else {
 			if len(currentString) >= 4 {
-				strings = append(strings, string(currentString))
+				result = append(result, string(currentString))
 			}
 			currentString = currentString[:0]
 		}
@@ -1131,15 +1138,15 @@ func (apb *AdvancedProtectionBypass) extractStringsFromData(data []byte) []strin
 	
 	// Don't forget the last string
 	if len(currentString) >= 4 {
-		strings = append(strings, string(currentString))
+		result = append(result, string(currentString))
 	}
 	
-	return strings
+	return result
 }
 
 // extractBase64Strings looks for base64 encoded strings
 func (apb *AdvancedProtectionBypass) extractBase64Strings(data []byte) []string {
-	strings := make([]string, 0)
+	result := make([]string, 0)
 	
 	// Look for base64 patterns
 	base64Regex := regexp.MustCompile(`[A-Za-z0-9+/]{20,}={0,2}`)
@@ -1150,16 +1157,16 @@ func (apb *AdvancedProtectionBypass) extractBase64Strings(data []byte) []string 
 		// Try to decode
 		// This is a simplified check - real implementation would import encoding/base64
 		if len(match)%4 == 0 || (len(match)%4 == 2 && strings.HasSuffix(match, "==")) || (len(match)%4 == 3 && strings.HasSuffix(match, "=")) {
-			strings = append(strings, "base64:"+match)
+			result = append(result, "base64:"+match)
 		}
 	}
 	
-	return strings
+	return result
 }
 
 // extractROTStrings looks for ROT13/Caesar cipher strings
 func (apb *AdvancedProtectionBypass) extractROTStrings(data []byte) []string {
-	strings := make([]string, 0)
+	result := make([]string, 0)
 	
 	for rot := 1; rot <= 25; rot++ {
 		decrypted := make([]byte, len(data))
@@ -1178,12 +1185,12 @@ func (apb *AdvancedProtectionBypass) extractROTStrings(data []byte) []string {
 		for _, str := range rotStrings {
 			// Only add if it looks like meaningful text
 			if apb.looksLikeMeaningfulText(str) {
-				strings = append(strings, fmt.Sprintf("rot%d:%s", rot, str))
+				result = append(result, fmt.Sprintf("rot%d:%s", rot, str))
 			}
 		}
 	}
 	
-	return strings
+	return result
 }
 
 // looksLikeMeaningfulText heuristically determines if text looks meaningful
