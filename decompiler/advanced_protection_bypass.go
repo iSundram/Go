@@ -301,8 +301,12 @@ func (apb *AdvancedProtectionBypass) findEncryptionKeys(elfFile *elf.File) map[s
 			}
 			
 			// Look for potential keys (high entropy data of specific sizes)
+			keyCount := 0
 			for _, keySize := range keySizes {
-				for i := 0; i <= len(data)-keySize; i += 4 {
+				for i := 0; i <= len(data)-keySize; i += keySize/2 { // Skip more aggressively
+					if keyCount >= 20 { // Limit keys per section
+						break
+					}
 					candidate := data[i : i+keySize]
 					entropy := apb.calculateEntropy(candidate)
 					
@@ -312,7 +316,11 @@ func (apb *AdvancedProtectionBypass) findEncryptionKeys(elfFile *elf.File) map[s
 						keys[keyName] = candidate
 						apb.cryptoAnalyzer.keys[keyName] = candidate
 						fmt.Printf("Potential encryption key found: %s (entropy: %.2f)\n", keyName, entropy)
+						keyCount++
 					}
+				}
+				if keyCount >= 20 {
+					break
 				}
 			}
 		}
@@ -1061,6 +1069,7 @@ func (apb *AdvancedProtectionBypass) extractHiddenStrings(filename string) error
 	defer elfFile.Close()
 	
 	allStrings := make([]string, 0)
+	keyCount := 0
 	
 	for _, section := range elfFile.Sections {
 		data, err := section.Data()
@@ -1072,8 +1081,12 @@ func (apb *AdvancedProtectionBypass) extractHiddenStrings(filename string) error
 		strings := apb.extractStringsFromData(data)
 		allStrings = append(allStrings, strings...)
 		
-		// Try to decrypt strings using found keys
+		// Try to decrypt strings using found keys (limited)
 		for keyName, key := range apb.cryptoAnalyzer.keys {
+			if keyCount >= 50 { // Limit total key testing
+				fmt.Printf("Key testing limit reached - skipping remaining keys\n")
+				break
+			}
 			decrypted := apb.tryXORDecrypt(data, key)
 			if decrypted != nil {
 				decryptedStrings := apb.extractStringsFromData(decrypted)
@@ -1082,6 +1095,7 @@ func (apb *AdvancedProtectionBypass) extractHiddenStrings(filename string) error
 					allStrings = append(allStrings, decryptedStrings...)
 				}
 			}
+			keyCount++
 		}
 		
 		// Look for base64 encoded strings
