@@ -1,1 +1,1 @@
-analyse the repo files, and after decompile binary directadmin, ans put source code in /src with 100% accuracy after decompiling , check wll files add all missing things . it should be 100% accurate
+analyse the repo files add all functions of go to decompile any binary , make that it can decompile any level of protected files even maximum protected, and after decompile binary directadmin (it is in directadmin.zip), and put source code in /src with 100% accuracy after decompiling , check wll files add all missing things . it should be 100% accurate. 
